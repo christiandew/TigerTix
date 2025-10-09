@@ -9,7 +9,7 @@
   async function getDb() {
     if (_db) return _db;
     _db = await open({ filename: DB_PATH, driver: sqlite3.Database });
-    await _db.exec('PRAGMA busy_timeout=1000;');
+    await _db.exec('PRAGMA busy_timeout=1000;'); //prevent server busy errors with concurrent purchases
     return _db;
   }
 

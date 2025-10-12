@@ -1,4 +1,8 @@
-  const path = require('path');
+ // client-service/models/clientModel.js
+// Purpose: Data access for client microservice (reads & purchase updates).
+// Notes:   DB logic stays here; controllers handle HTTP & validation.
+ 
+ const path = require('path');
   const sqlite3 = require('sqlite3').verbose();
   const { open } = require('sqlite');
 
@@ -6,6 +10,14 @@
 
   let _db; // simple in-process cache
 
+
+  /**
+ * getDb
+ * Purpose: Lazily open and cache the SQLite connection.
+ * Inputs:  none
+ * Output:  sqlite Database instance (Promise)
+ * Side effects: opens a file handle; sets helpful PRAGMAs
+ */
   async function getDb() {
     if (_db) return _db;
     _db = await open({ filename: DB_PATH, driver: sqlite3.Database });
@@ -13,6 +25,16 @@
     return _db;
   }
 
+
+
+
+  /**
+ * getAllEvents
+ * Purpose: Fetch all events to display to users.
+ * Inputs:  none
+ * Output:  Array<{ id, name, date, ticketsAvailable }>
+ * Side effects: none
+ */
   async function getAllEvents()
   {
     const db = await getDb();
@@ -20,6 +42,16 @@
     return result;
   }
 
+
+  /**
+ * purchaseTicket
+ * Purpose: Atomically decrement ticketsAvailable for one event.
+ * Inputs:  id (integer) — event identifier
+ * Output:  { kind: 'OK', row }
+ *          { kind: 'EVENT NOT FOUND IN DB' }
+ *          { kind: 'NO TICKETS AVAILABLE' }
+ * Side effects: writes to DB within a transaction (BEGIN IMMEDIATE…COMMIT/ROLLBACK)
+ */
   async function purchaseTicket(id)
   {
     const db = await getDb();

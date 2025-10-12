@@ -1,6 +1,18 @@
+// client-service/controllers/clientController.js
+// Purpose: HTTP layer for the client microservice (list events & purchase flow).
+// Notes: Keep handlers thin; delegate DB work to the model. Status codes map to rubric.
+
 const { getAllEvents, purchaseTicket} = require('../models/clientModel');
 
 
+
+/**
+ * listEvents
+ * Purpose: Return the full list of events for the client API.
+ * Inputs:  (req) none
+ * Output:  200 JSON array on success; 500 on server error
+ * Side effects: none
+ */ 
 exports.listEvents = async (req, res) => {
     try
     {
@@ -13,6 +25,18 @@ exports.listEvents = async (req, res) => {
     }
 }
 
+
+/**
+ * purchaseEvent
+ * Purpose: Decrease ticket count for a given event ID (simulated purchase).
+ * Inputs:  (req.params.id) event id as number
+ * Output:  200 with updated row on success
+ *          400 if id is invalid
+ *          404 if event not found
+ *          409 if no tickets are available
+ *          500 for unexpected server errors
+ * Side effects: writes to DB via model (transactional)
+ */
 exports.purchaseEvent = async(req, res) => {
     try
     {

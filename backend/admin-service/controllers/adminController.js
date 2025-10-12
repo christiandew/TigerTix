@@ -14,6 +14,14 @@ function isNonNegativeInteger(v) {
   return Number.isInteger(v) && v >= 0;
 }
 
+
+/**
+ * postCreateEvent
+ * Purpose: REST handler for creating events (POST /api/events).
+ * Inputs:  req.body { name, date, ticketsAvailable }
+ * Output:  201 with created event | 400 on validation error | 500 on server error
+ * Side effects: writes to DB through model
+ */
 exports.postCreateEvent = async (req, res) => {
   try {
     const { name, date, ticketsAvailable } = req.body ?? {};
@@ -23,7 +31,7 @@ exports.postCreateEvent = async (req, res) => {
       return res.status(400).json({ error: 'name is required (non-empty string)' });
     }
     if (!isNonEmptyString(date)) {
-      return res.status(400).json({ error: 'date is required (ISO-8601 string)' });
+      return res.status(400).json({ error: 'date is required (ISO string)' });
     }
     const tickets = Number(ticketsAvailable);
     if (!Number.isFinite(tickets) || !isNonNegativeInteger(tickets)) {

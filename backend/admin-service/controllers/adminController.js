@@ -34,6 +34,12 @@ exports.postCreateEvent = async (req, res) => {
       return res.status(400).json({ error: 'date is required (ISO string)' });
     }
     const tickets = Number(ticketsAvailable);
+
+    // Demo-only: force a 500 internal error when name is exactly 'FORCE500'
+    // This helps demonstrate server-side 500 handling in recordings. Keep it small and explicit.
+    if (name === 'FORCE500') {
+      throw new Error('forced demo error');
+    }
     if (!Number.isFinite(tickets) || !isNonNegativeInteger(tickets)) {
       return res.status(400).json({ error: 'ticketsAvailable must be a non-negative integer' });
     }

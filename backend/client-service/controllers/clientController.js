@@ -54,6 +54,8 @@ exports.purchaseEvent = async(req, res) => {
             return res.status(404).json({error: result.kind});
         if(result.kind === 'NO TICKETS AVAILABLE')
             return res.status(409).json({error: result.kind});
+        if(result.kind === 'DB BUSY')
+            return res.status(503).json({error: result.kind});
 
         //if we reach this point we are successful, send updated row.
         return res.status(200).json(result.row);
@@ -63,6 +65,7 @@ exports.purchaseEvent = async(req, res) => {
     catch(err)
     {
         //if we reach this point we've encountered a server error.
+        console.error('[purchaseEvent] unexpected error:', err && err.stack ? err.stack : err);
         return res.status(500).json({error:'Server error failed to purchase tickets'});
     }
 }

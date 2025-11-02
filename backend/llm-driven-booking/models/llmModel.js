@@ -95,10 +95,15 @@ async function parseWithLLM(user_input)
 );
 
 const data = await res.json();
-console.log('[parseWithLLM] data: ', data);
 
+const raw = data?.output_text ?? data?.output?.[0]?.content?.find?.(c => c.type === 'output_text')?.text;
 
-return data;
+const intent = JSON.parse(raw);
+
+if (typeof intent.tickets !== 'number') intent.tickets = 1;
+
+console.log(intent.message);
+return intent;
 
 }
 

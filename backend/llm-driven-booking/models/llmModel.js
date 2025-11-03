@@ -4,13 +4,8 @@ const path = require("path");
 const sqlite3 = require("sqlite3").verbose();
 const { open } = require("sqlite");
 
-const DB_PATH = path.join(
-  __dirname,
-  "..",
-  "..",
-  "shared-db",
-  "database.sqlite"
-);
+// Allow tests to override the DB path via env. Default to shared-db/database.sqlite
+const DB_PATH = process.env.DB_PATH || path.join(__dirname, '..', '..', 'shared-db', 'database.sqlite');
 let _db;
 
 async function getDb() {

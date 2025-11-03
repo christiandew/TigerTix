@@ -15,23 +15,25 @@ app.use(express.json());
 
 const PORT = 5001;
 
+// init() mounts routes and runs DB setup. Tests can call init() before using `app`.
+async function init() {
+  await runSetup(); // ensures events table exists & seeds
+  app.use('/api', routes); // base path = /api  (router uses '/admin/events')
+  return app;
+}
 
-/**
- * start
- * Purpose: run DB setup then start Express
- * Inputs:  none
- * Output:  none (process listens on PORT)
- * Side effects: initializes DB; logs boot messages
- */
-(async () => {
-  try {
-    await runSetup();              // <- ensures events table exists & seeds (if any)
-    app.use('/api', routes);       // base path = /api  (router uses '/admin/events')
-    app.listen(PORT, () =>
-      console.log(`Server running at http://localhost:${PORT}`)
-    );
-  } catch (e) {
-    console.error('[boot] setup failed:', e.message);
-    process.exit(1);
-  }
-})();
+function start() {
+  init()
+    .then(() => {
+      app.listen(PORT, () => console.log(`Server running at http://localhost:${PORT}`));
+    })
+    .catch((e) => {
+      console.error('[boot] setup failed:', e && e.message ? e.message : e);
+      process.exit(1);
+    });
+}
+
+// When run directly, start the server.
+if (require.main === module) start();
+
+module.exports = { app, init, start };

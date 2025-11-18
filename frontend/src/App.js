@@ -12,6 +12,9 @@
  */
 import React, { useEffect, useState } from 'react';
 import './App.css';
+import { useAuth } from './AuthContext';
+import Login from './Login';
+import Register from './Register';
 
 function App() {
   // UI state
@@ -23,6 +26,9 @@ function App() {
 
 
   const BASE = 'http://localhost:6001';
+  const { user, logout } = useAuth();
+  const [showLogin, setShowLogin] = useState(false);
+  const [showRegister, setShowRegister] = useState(false);
 
   // Load events once on mount
   useEffect(() => {
@@ -85,7 +91,22 @@ function App() {
       <div className="App">
         <header>
           <h1>Clemson Campus Events</h1>
+          <div className="auth-status">
+            {user ? (
+              <>
+                <span>Logged in as {user.email}</span>
+                <button type="button" onClick={() => logout()}>Logout</button>
+              </>
+            ) : (
+              <>
+                <button type="button" onClick={() => { setShowLogin((s) => !s); setShowRegister(false); }}>Login</button>
+                <button type="button" onClick={() => { setShowRegister((s) => !s); setShowLogin(false); }}>Register</button>
+              </>
+            )}
+          </div>
         </header>
+        {showLogin && !user && <Login onDone={() => setShowLogin(false)} />}
+        {showRegister && !user && <Register onDone={() => setShowRegister(false)} />}
 
         {loading && <p className="status" aria-live="polite">Loading events…</p>}
         {success && <p className="status" role="status" aria-live="polite">{success}</p>}

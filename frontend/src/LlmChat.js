@@ -111,6 +111,19 @@ export default function LlmChat() {
     if (window.speechSynthesis) window.speechSynthesis.onvoiceschanged = load;
   }, [selectedVoice]);
 
+    function getAuthHeaders() {
+    let token = null;
+    try {
+      token =
+        localStorage.getItem("token") ||
+        localStorage.getItem("jwt") ||
+        localStorage.getItem("authToken");
+    } catch (e) {
+      // ignore if localStorage is not accessible
+    }
+    return token ? { Authorization: `Bearer ${token}` } : {};
+  }
+
   // sanitize + chunk text for TTS
   const ttsSanitize = (s) =>
     String(s || "")
@@ -206,7 +219,11 @@ export default function LlmChat() {
     try {
       const res = await fetch(`${LLM_BASE}/api/llm/parse`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...getAuthHeaders(),
+        },
+        credentials: "include",
         body: JSON.stringify({ user_input: text }),
       });
       const data = await res.json();
@@ -214,22 +231,50 @@ export default function LlmChat() {
 
       // show events
       if (data?.intent === "show_events" && Array.isArray(data.results)) {
-        const header = data.message || "Here are the upcoming events:";
-        const list = data.results
-          .map((r) => `• ${r.name} — ${r.date} (${r.remaining} left)`)
+        const eventsList = data.results
+          .map(
+            (e) =>
+              `• ${e.name} — ${e.date} (${e.remaining} left)${
+                e.total ? ` [${e.total} total]` : ""
+              }`
+          )
           .join("\n");
-        pushMessage("assistant", list ? `${header}\n${list}` : header);
+        pushMessage(
+          "assistant",
+          `Here are the upcoming events.\n${eventsList}`
+        );
         return;
       }
 
       // propose booking
       if (data?.intent === "propose_booking") {
+        const details = data?.availability;
+        const ok = details?.can_fulfill === true;
+        const eventName = details?.event_name || "your event";
+        const remaining = Number.isFinite(details?.remaining)
+          ? `${details.remaining} left`
+          : "remaining tickets";
         const qty = Number.isFinite(data?.tickets) ? data.tickets : 1;
-        const name = (data?.event_text || "").trim() || "the selected event";
-        const polite = `Okay I can prepare ${qty} ticket${
-          qty > 1 ? "s" : ""
-        } for ${name}. Please confirm with the button.`;
-        const msg = (data?.message || "").trim();
+
+        if (ok) {
+          pushMessage(
+            "assistant",
+            `I found the event you requested: ${eventName} (${remaining}).\n` +
+              `You requested ${qty} ticket(s). Click "Confirm Booking" below to finalize.`
+          );
+        } else {
+          pushMessage(
+            "assistant",
+            `I found the event you requested: ${eventName}, but it can't fulfill your request.`
+          );
+        }
+        return;
+      }
+
+      // generic, including "ok" fallback
+      if (typeof data?.message === "string" && data.message.trim()) {
+        const msg = data.message.trim();
+        const polite = "Okay. What would you like to do next?";
         pushMessage(
           "assistant",
           !msg || /^ok(ay)?\.?$/i.test(msg) ? polite : msg
@@ -259,7 +304,11 @@ export default function LlmChat() {
     try {
       const res = await fetch(`${LLM_BASE}/api/llm/confirm`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...getAuthHeaders(),
+        },
+        credentials: "include",
         body: JSON.stringify({ event_id: eventId, qty }),
       });
       if (!res.ok) {
@@ -271,17 +320,20 @@ export default function LlmChat() {
         return;
       }
       const data = await res.json();
-      const name = (p?.event_text || "").trim() || "event";
+      const remaining = Number.isFinite(data?.remaining)
+        ? data.remaining
+        : "unknown";
+      const eventName = data?.event_name || "your event";
       pushMessage(
         "assistant",
-        `Booked ${name} — remaining: ${data?.remaining ?? "n/a"}`
+        `Booked ${eventName} — remaining tickets: ${remaining}.`
       );
-      lastParseRef.current = null;
     } catch (err) {
-      pushMessage("assistant", "Sorry—booking failed.");
-      console.error("[confirm]", err);
+      pushMessage("assistant", "Sorry, booking failed due to a network error.");
+      console.error("[handleConfirmClick]", err);
     }
   }
+
 
   async function handleSendClick() {
     const text = input.trim();

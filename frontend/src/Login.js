@@ -1,36 +1,78 @@
+// src/Login.js
 import React, { useState } from 'react';
 import { useAuth } from './AuthContext';
 
-export default function Login({ onDone }) {
+function Login({ onDone }) {
+  const { login } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState(null);
-  const { login } = useAuth();
+  const [error, setError] = useState('');
+  const [busy, setBusy] = useState(false);
 
-  const submit = async (e) => {
+  async function handleSubmit(e) {
     e.preventDefault();
-    setError(null);
+    setError('');
+    setBusy(true);
+
     try {
       await login(email, password);
       if (onDone) onDone();
     } catch (err) {
       setError(err.message || 'Login failed');
+    } finally {
+      setBusy(false);
     }
-  };
+  }
 
   return (
-    <form onSubmit={submit} className="auth-form">
-      <h2>Login</h2>
-      {error && <p className="error" role="alert">{error}</p>}
-      <label>
-        Email
-        <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-      </label>
-      <label>
-        Password
-        <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
-      </label>
-      <button type="submit">Log in</button>
-    </form>
+    <div className="auth-card">
+      <h2 className="auth-title">Sign in</h2>
+      <p className="auth-subtitle">Use your TigerTix account to continue.</p>
+
+      {error && (
+        <p className="auth-error" role="alert">
+          {error}
+        </p>
+      )}
+
+      <form onSubmit={handleSubmit} className="auth-form">
+        <div className="auth-field">
+          <label htmlFor="login-email" className="auth-label">
+            Email
+          </label>
+          <input
+            id="login-email"
+            type="email"
+            className="auth-input"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            autoComplete="email"
+            required
+          />
+        </div>
+
+        <div className="auth-field">
+          <label htmlFor="login-password" className="auth-label">
+            Password
+          </label>
+          <input
+            id="login-password"
+            type="password"
+            className="auth-input"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            autoComplete="current-password"
+            required
+            minLength={6}
+          />
+        </div>
+
+        <button type="submit" className="auth-button" disabled={busy}>
+          {busy ? 'Signing in…' : 'Sign in'}
+        </button>
+      </form>
+    </div>
   );
 }
+
+export default Login;

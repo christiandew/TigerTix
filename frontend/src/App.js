@@ -1,15 +1,3 @@
-// App.js — Sprint 1 frontend
-// Goal: show events, let the user buy a ticket, and meet basic a11y needs.
-// Notes: We talk to the client service (read/purchase). Admin service is for creating events.
-
-/**
- * App
- * Purpose: Renders the events list, loads data from the client service,
- *          and lets the user purchase a ticket with clear feedback.
- * Inputs:  None (top-level component manages its own state)
- * Output:  React tree; performs network I/O (fetch) and updates local state
- * Side effects: Fetches data on mount; POSTs on purchase
- */
 import React, { useEffect, useState } from 'react';
 import './App.css';
 import { useAuth } from './AuthContext';
@@ -17,20 +5,17 @@ import Login from './Login';
 import Register from './Register';
 
 function App() {
-  // UI state
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
   const [buyingId, setBuyingId] = useState(null);
 
-
   const BASE = 'http://localhost:6001';
   const { user, logout } = useAuth();
   const [showLogin, setShowLogin] = useState(false);
   const [showRegister, setShowRegister] = useState(false);
 
-  // Load events once on mount
   useEffect(() => {
     setLoading(true);
     setError(null);
@@ -45,23 +30,21 @@ function App() {
       .finally(() => setLoading(false));
   }, []);
 
-  /**
-   * buyTicket
-   * Purpose: Attempts to purchase one ticket for a given event by ID.
-   * Inputs:
-   *   id   (number|string) event identifier
-   *   name (string)        event name (for user-friendly messages only)
-   * Output: None (updates local events state and user messages)
-   * Side effects: POSTs to the client service; updates state based on response
-   */
   const buyTicket = async (id, name) => {
     setError(null);
     setSuccess(null);
     setBuyingId(id);
     try {
-      const res = await fetch(`${BASE}/api/events/${id}/purchase`, { method: 'POST' });
+      const res = await fetch(`${BASE}/api/events/${id}/purchase`, {
+        method: 'POST',
+        credentials: 'include',
+      });
 
-      // Common API results we want to show nicely
+      if (res.status === 401) {
+        setError('Please log in to purchase tickets.');
+        return;
+      }
+
       if (res.status === 404 || res.status === 409) {
         const body = await res.json().catch(() => ({}));
         setError(body.error || 'Unable to purchase ticket');
@@ -72,7 +55,6 @@ function App() {
         return;
       }
 
-      // Update only the changed row the server returns
       const updated = await res.json();
       setEvents((prev) => prev.map((e) => (e.id === updated.id ? updated : e)));
       setSuccess(`Purchased 1 ticket for ${name}.`);
@@ -85,22 +67,33 @@ function App() {
 
   return (
     <>
-      {/* Skip link helps keyboard users jump straight to content; hidden until focused */}
       <a className="skip-link" href="#main">Skip to main content</a>
 
       <div className="App">
-        <header>
+        <header className="app-header">
           <h1>Clemson Campus Events</h1>
           <div className="auth-status">
             {user ? (
               <>
-                <span>Logged in as {user.email}</span>
-                <button type="button" onClick={() => logout()}>Logout</button>
+                <span className="auth-chip">Logged in as {user.email}</span>
+                <button type="button" className="ghost-button" onClick={() => logout()}>Logout</button>
               </>
             ) : (
               <>
-                <button type="button" onClick={() => { setShowLogin((s) => !s); setShowRegister(false); }}>Login</button>
-                <button type="button" onClick={() => { setShowRegister((s) => !s); setShowLogin(false); }}>Register</button>
+                <button
+                  type="button"
+                  className="ghost-button"
+                  onClick={() => { setShowLogin((s) => !s); setShowRegister(false); }}
+                >
+                  Login
+                </button>
+                <button
+                  type="button"
+                  className="ghost-button"
+                  onClick={() => { setShowRegister((s) => !s); setShowLogin(false); }}
+                >
+                  Register
+                </button>
               </>
             )}
           </div>
@@ -128,7 +121,6 @@ function App() {
                     className="buy-button"
                     onClick={() => buyTicket(event.id, event.name)}
                     disabled={soldOut || busy}
-                    // Clear, screen-reader friendly name
                     aria-label={soldOut
                       ? `Sold out: ${event.name}`
                       : `Buy ticket for ${event.name}`}

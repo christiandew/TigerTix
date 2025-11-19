@@ -23,7 +23,28 @@ END;
 
 CREATE INDEX IF NOT EXISTS idx_events_date ON events(date);
 
--- mock data
+-- Users table for authentication
+CREATE TABLE IF NOT EXISTS users (
+  id           INTEGER PRIMARY KEY AUTOINCREMENT,
+  email        TEXT    NOT NULL UNIQUE,
+  passwordHash TEXT    NOT NULL,
+
+  createdAt    TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
+  updatedAt    TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
+);
+
+CREATE TRIGGER IF NOT EXISTS trg_users_updatedAt
+AFTER UPDATE ON users
+FOR EACH ROW
+BEGIN
+  UPDATE users
+     SET updatedAt = strftime('%Y-%m-%dT%H:%M:%fZ','now')
+   WHERE id = OLD.id;
+END;
+
+CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+
+-- mock data for events
 INSERT INTO events (name, date, ticketsAvailable)
 SELECT 'Clemson vs. Florida State', '2025-10-18', 150
 WHERE NOT EXISTS (SELECT 1 FROM events WHERE name = 'Clemson vs. Florida State');

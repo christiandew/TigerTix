@@ -11,7 +11,7 @@ function App() {
   const [success, setSuccess] = useState(null);
   const [buyingId, setBuyingId] = useState(null);
 
-  const BASE = 'http://localhost:6001';
+const BASE = process.env.REACT_APP_API_BASE || 'http://localhost:6001';
   const { user, logout } = useAuth();
   const [showLogin, setShowLogin] = useState(false);
   const [showRegister, setShowRegister] = useState(false);

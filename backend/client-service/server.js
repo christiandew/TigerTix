@@ -8,7 +8,8 @@ app.use(cors({ origin: process.env.FRONTEND_ORIGIN || 'http://localhost:3000', c
 app.use(cookieParser());
 app.use(express.json());
 
-const PORT = 6001;
+
+const PORT = process.env.PORT || 6001;
 
 async function init() {
   app.use('/api', routes);

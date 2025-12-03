@@ -13,7 +13,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-const PORT = 5001;
+const PORT = process.env.PORT || 5001;
 
 // init() mounts routes and runs DB setup. Tests can call init() before using `app`.
 async function init() {

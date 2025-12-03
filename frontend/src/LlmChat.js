@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import "./LlmChat.css";
 
-const LLM_BASE = "http://localhost:7001";
+const LLM_BASE = process.env.REACT_APP_LLM_BASE || 'http://localhost:7001';
 
 export default function LlmChat() {
   // chat

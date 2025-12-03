@@ -5,6 +5,13 @@ const { createUser, findByEmail, findById } = require('../models/userModel');
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-please-change';
 const TOKEN_NAME = 'token';
 const TOKEN_MAX_AGE_MS = 30 * 60 * 1000; // 30 minutes
+const isProd = process.env.NODE_ENV === 'production';
+const COOKIE_OPTIONS = {
+  httpOnly: true,
+  sameSite: isProd ? 'none' : 'lax', // allow cross-site requests in prod (Vercel -> Render)
+  secure: isProd,                    // cookies must be Secure when sameSite is none
+  maxAge: TOKEN_MAX_AGE_MS,
+};
 
 async function register(req, res) {
   const { email, password } = req.body || {};
@@ -32,11 +39,7 @@ async function register(req, res) {
       { expiresIn: '30m' }
     );
 
-    res.cookie(TOKEN_NAME, token, {
-      httpOnly: true,
-      sameSite: 'lax',
-      maxAge: TOKEN_MAX_AGE_MS,
-    });
+    res.cookie(TOKEN_NAME, token, COOKIE_OPTIONS);
 
     return res.status(201).json({
       id: user.id,
@@ -71,11 +74,7 @@ async function login(req, res) {
       { expiresIn: '30m' }
     );
 
-    res.cookie(TOKEN_NAME, token, {
-      httpOnly: true,
-      sameSite: 'lax',
-      maxAge: TOKEN_MAX_AGE_MS,
-    });
+    res.cookie(TOKEN_NAME, token, COOKIE_OPTIONS);
 
     return res.json({
       id: user.id,
@@ -88,7 +87,7 @@ async function login(req, res) {
 }
 
 function logout(req, res) {
-  res.cookie(TOKEN_NAME, '', { maxAge: 0 });
+  res.cookie(TOKEN_NAME, '', { ...COOKIE_OPTIONS, maxAge: 0 });
   return res.json({ success: true });
 }
 

@@ -41,12 +41,16 @@ jobs:
       - uses: actions/checkout@v4
       - run: npm install -g vercel
       - name: Pull Vercel env
-        run: vercel pull --yes --environment=production --token ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          if [ -z "${{ secrets.VERCEL_TOKEN }}" ]; then echo "VERCEL_TOKEN not set"; exit 1; fi
+          if [ -z "${{ secrets.VERCEL_ORG_ID }}" ]; then echo "VERCEL_ORG_ID not set"; exit 1; fi
+          if [ -z "${{ secrets.VERCEL_PROJECT_ID }}" ]; then echo "VERCEL_PROJECT_ID not set"; exit 1; fi
+          vercel pull --yes --environment=production --token "${{ secrets.VERCEL_TOKEN }}"
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
       - name: Deploy to Vercel
-        run: vercel deploy --prod --prebuilt --token ${{ secrets.VERCEL_TOKEN }}
+        run: vercel deploy --prod --prebuilt --token "${{ secrets.VERCEL_TOKEN }}"
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
@@ -56,6 +60,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Trigger Render deploy
-        run: curl -X POST "$RENDER_DEPLOY_HOOK"
-        env:
-          RENDER_DEPLOY_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK }}
+        run: |
+          if [ -z "${{ secrets.RENDER_DEPLOY_HOOK }}" ]; then
+            echo "RENDER_DEPLOY_HOOK is not set"; exit 1;
+          fi
+          curl -X POST "${{ secrets.RENDER_DEPLOY_HOOK }}"

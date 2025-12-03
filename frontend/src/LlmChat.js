@@ -326,10 +326,7 @@ export default function LlmChat() {
         ? data.remaining
         : "unknown";
       const eventName = data?.event_name || "your event";
-      pushMessage(
-        "assistant",
-        `Booked ${eventName} — remaining tickets: ${remaining}.`
-      );
+      pushMessage("assistant", `Booked ${eventName} — remaining: ${remaining}.`);
     } catch (err) {
       pushMessage("assistant", "Sorry, booking failed due to a network error.");
       console.error("[handleConfirmClick]", err);

@@ -31,7 +31,8 @@ export default function LlmChat() {
   const speakSessionRef = useRef(0);
 
   // last parse (for confirm button)
-  const lastParseRef = useRef(null);
+  const lastParseRef = useRef(null); // keeps latest value
+  const [lastParse, setLastParse] = useState(null); // triggers re-render when parse result changes
 
   const pushMessage = (role, text) =>
     setMessages((m) => [...m, { role, text }]);
@@ -228,6 +229,7 @@ export default function LlmChat() {
       });
       const data = await res.json();
       lastParseRef.current = data;
+      setLastParse(data);
 
       // show events
       if (data?.intent === "show_events" && Array.isArray(data.results)) {
@@ -260,7 +262,7 @@ export default function LlmChat() {
           pushMessage(
             "assistant",
             `I found the event you requested: ${eventName} (${remaining}).\n` +
-              `You requested ${qty} ticket(s). Click "Confirm Booking" below to finalize.`
+              `You requested ${qty} ticket(s). Use the confirm button below to finalize.`
           );
         } else {
           pushMessage(
@@ -292,7 +294,7 @@ export default function LlmChat() {
 
   // confirm booking
   async function handleConfirmClick() {
-    const p = lastParseRef.current || {};
+    const p = lastParse || {};
     const proposed = p?.intent === "propose_booking";
     const eventId =
       p?.normalized?.event_id ?? p?.availability?.event_id ?? null;
@@ -344,7 +346,7 @@ export default function LlmChat() {
   }
 
   const canConfirm = (() => {
-    const p = lastParseRef.current || {};
+    const p = lastParse || {};
     const proposed = p?.intent === "propose_booking";
     const eventId =
       p?.normalized?.event_id ?? p?.availability?.event_id ?? null;

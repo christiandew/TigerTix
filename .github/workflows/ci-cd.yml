@@ -23,6 +23,7 @@ jobs:
         working-directory: backend
         env:
           OPENAI_API_KEY: dummy
+          NODE_ENV: test
         run: npm test -- --runInBand
       - name: Install frontend deps
         working-directory: frontend

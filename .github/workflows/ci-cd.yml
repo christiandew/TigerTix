@@ -41,6 +41,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: npm install -g vercel
+      - name: Install frontend deps
+        run: npm ci
+        working-directory: frontend
       - name: Pull Vercel env
         run: |
           if [ -z "${{ secrets.VERCEL_TOKEN }}" ]; then echo "VERCEL_TOKEN not set"; exit 1; fi

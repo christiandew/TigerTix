@@ -5,7 +5,9 @@ const sqlite3 = require("sqlite3").verbose();
 const { open } = require("sqlite");
 
 // Allow tests to override the DB path via env. Default to shared-db/database.sqlite
-const DB_PATH = process.env.DB_PATH || path.join(__dirname, '..', '..', 'shared-db', 'database.sqlite');
+const DB_PATH =
+  process.env.DB_PATH ||
+  path.join(__dirname, "..", "..", "shared-db", "database.sqlite");
 let _db;
 
 async function getDb() {
@@ -125,7 +127,12 @@ function hydrateNormalization(intent, events) {
   const qty = Number.isFinite(intent.tickets) ? intent.tickets : 1;
 
   const out = { ...intent, normalized: { ...(intent.normalized || {}) } };
-  let availability = { event_id: null, remaining: 0, can_fulfill: false };
+  let availability = {
+    event_id: null,
+    event_name: null,
+    remaining: 0,
+    can_fulfill: false,
+  };
 
   if (!nameRaw) return { normalizedIntent: out, availability };
 
@@ -161,6 +168,7 @@ function hydrateNormalization(intent, events) {
     const remaining = Number(match.ticketsAvailable) || 0;
     availability = {
       event_id: match.id,
+      event_name: match.name,
       remaining,
       can_fulfill: remaining >= qty,
     };
@@ -177,7 +185,7 @@ async function confirmBookingTxn(event_id, qty) {
     await db.exec("BEGIN IMMEDIATE;");
 
     const ev = await db.get(
-      `SELECT id, ticketsAvailable FROM events WHERE id = ?`,
+      `SELECT id, name, ticketsAvailable FROM events WHERE id = ?`,
       event_id
     );
     if (!ev) {
@@ -222,6 +230,7 @@ async function confirmBookingTxn(event_id, qty) {
       payload: {
         ok: true,
         eventId: event_id,
+        event_name: ev.name,
         tickets: qty,
         remaining: Number(upd.ticketsAvailable) || 0,
       },

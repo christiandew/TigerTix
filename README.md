@@ -568,10 +568,12 @@ Ensure all services are running and CORS is properly configured. Check that:
 #### Team Members
 - **Christian Dew** — Project Lead, Microservices Architecture, Backend Development
 - **Arun Singh** — Authentication System, Frontend Integration, Deployment
+- **Tyson Small** — QA Lead, Testing Lead
+
 
 #### Course Instructors & Teaching Assistants
-- **Instructor:** [Course Instructor Name] (CPSC 3720)
-- **Teaching Assistants:** [TA Names] (Office Hours & Support)
+- **Instructor:** Dr. Julian Brinkley (CPSC 3720)
+- **Teaching Assistants:** Colt Doster & Atik Enam
 
 #### Project Roles
 
